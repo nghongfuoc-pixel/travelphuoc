@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Du Lịch Việt (TravelViet) — Đặt vé máy bay &amp; Tour du lịch</title>
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/components.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="logo" href="index.html">Du Lịch Việt<span>.vn</span></a>
+    <nav class="main-nav">
+      <a href="index.html">Trang chủ</a>
+      <a href="flights.html">Chuyến bay</a>
+      <a href="tours.html">Tour</a>
+    </nav>
+    <span id="auth-area" class="auth-area"></span>
+    <a class="cart-link" href="cart.html">
+      🛒 Giỏ hàng <span id="cart-count" class="cart-badge">0</span>
+    </a>
+  </div>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="container">
+      <h1>Tìm chuyến bay &amp; tour du lịch tốt nhất</h1>
+      <p>Đặt vé máy bay và tour trọn gói với giá tốt nhất từ các hãng hàng không hàng đầu.</p>
+
+      <form id="search-form" class="search-box">
+        <div class="trip-tabs">
+          <button type="button" class="trip-tab active" data-trip="roundtrip">Vé khứ hồi</button>
+          <button type="button" class="trip-tab" data-trip="oneway">Vé một chiều</button>
+        </div>
+        <div class="search-fields">
+          <div class="field">
+            <label for="from-input">Điểm đi</label>
+            <select id="from-input" required>
+              <option value="" disabled selected>Chọn điểm đi</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="to-input">Điểm đến</label>
+            <select id="to-input" required>
+              <option value="" disabled selected>Chọn điểm đến</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="depart-date">Ngày đi</label>
+            <input id="depart-date" type="date" required>
+          </div>
+          <div class="field" id="return-date-field">
+            <label for="return-date">Ngày về</label>
+            <input id="return-date" type="date">
+          </div>
+          <button type="submit" class="btn btn-accent">Tìm kiếm</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <h2>Tour du lịch nổi bật</h2>
+      <div class="tour-grid" id="featured-tours"></div>
+    </div>
+  </section>
+
+  <section class="section section-alt">
+    <div class="container">
+      <h2>Đối tác hãng hàng không</h2>
+      <div class="airline-grid" id="airline-list"></div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <p>© 2026 Du Lịch Việt (TravelViet) — Website demo, không phải dịch vụ đặt vé thật.</p>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script type="module" src="assets/js/pages/home.js"></script>
+</body>
+</html>
