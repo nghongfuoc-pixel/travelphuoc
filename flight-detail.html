@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chi tiết chuyến bay — Du Lịch Việt (TravelViet)</title>
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/components.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="logo" href="index.html">Du Lịch Việt<span>.vn</span></a>
+    <nav class="main-nav">
+      <a href="index.html">Trang chủ</a>
+      <a href="flights.html">Chuyến bay</a>
+      <a href="tours.html">Tour</a>
+    </nav>
+    <span id="auth-area" class="auth-area"></span>
+    <a class="cart-link" href="cart.html">
+      🛒 Giỏ hàng <span id="cart-count" class="cart-badge">0</span>
+    </a>
+  </div>
+</header>
+
+<main class="detail-page">
+  <div class="container">
+    <div class="detail-header" id="flight-overview"></div>
+
+    <h2>Chọn hạng vé</h2>
+    <div class="fare-table">
+      <div class="fare-card economy">
+        <h3>Hạng Phổ Thông</h3>
+        <span class="price" id="price-economy">—</span>
+        <ul>
+          <li>Hành lý ký gửi 23kg</li>
+          <li>Hành lý xách tay 7kg</li>
+          <li>Suất ăn theo hãng</li>
+          <li>Đổi vé mất phí, không hoàn tiền</li>
+        </ul>
+        <button class="btn btn-primary" id="select-economy" style="width:100%">Chọn Phổ Thông</button>
+      </div>
+
+      <div class="fare-card business">
+        <h3>Hạng Thương Gia</h3>
+        <span class="price" id="price-business">—</span>
+        <ul>
+          <li>Hành lý ký gửi 32kg</li>
+          <li>Hành lý xách tay 10kg</li>
+          <li>Suất ăn cao cấp, phòng chờ thương gia</li>
+          <li>Đổi/hoàn vé miễn phí</li>
+        </ul>
+        <button class="btn btn-accent" id="select-business" style="width:100%">Chọn Thương Gia</button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast">
+  Đã thêm vào giỏ hàng
+  <a href="cart.html">Xem giỏ hàng</a>
+</div>
+
+<footer class="site-footer">
+  <div class="container">
+    <p>© 2026 Du Lịch Việt (TravelViet) — Website demo, không phải dịch vụ đặt vé thật.</p>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script type="module" src="assets/js/pages/flight-detail.js"></script>
+</body>
+</html>

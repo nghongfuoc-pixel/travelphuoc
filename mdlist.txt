@@ -1,0 +1,8 @@
+README.md         - Tong quan du an, tech stack, cach chay
+PRD.md            - Yeu cau san pham chi tiet tung trang
+ARCHITECTURE.md   - Kien truc ky thuat, cach SQLite (sql.js) chay trong browser, cau truc thu muc
+DATABASE.md       - Schema SQLite day du 10 bang + quan he
+ROUTES.md         - Danh sach toan bo trang, luong dieu huong, route guard
+UI_SPEC.md        - Dac ta giao dien chi tiet tung trang, bang mau tong sang
+SEED_DATA.md      - Du lieu mau: tai khoan, 8+8 tour, hang bay, chuyen bay, don hang
+ACCEPTANCE.md     - Checklist nghiem thu cho tung chuc nang

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Đăng nhập — Du Lịch Việt (TravelViet)</title>
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/components.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="logo" href="index.html">Du Lịch Việt<span>.vn</span></a>
+    <nav class="main-nav">
+      <a href="index.html">Trang chủ</a>
+      <a href="flights.html">Chuyến bay</a>
+      <a href="tours.html">Tour</a>
+    </nav>
+    <span id="auth-area" class="auth-area"></span>
+    <a class="cart-link" href="cart.html">
+      🛒 Giỏ hàng <span id="cart-count" class="cart-badge">0</span>
+    </a>
+  </div>
+</header>
+
+<main class="auth-page">
+  <div class="auth-card">
+    <h1>Đăng nhập</h1>
+    <p class="subtitle">Chào mừng bạn quay lại TravelViet</p>
+
+    <div class="auth-error" id="login-error"></div>
+
+    <form id="login-form">
+      <div class="form-group">
+        <label for="login-identifier">Email hoặc Username</label>
+        <input id="login-identifier" type="text" required>
+      </div>
+      <div class="form-group">
+        <label for="login-password">Mật khẩu</label>
+        <input id="login-password" type="password" required>
+      </div>
+      <button type="submit" class="btn btn-accent" style="width:100%">Đăng nhập</button>
+    </form>
+
+    <p class="auth-links">
+      <a href="forgot-password.html">Quên mật khẩu?</a> ·
+      Chưa có tài khoản? <a href="register.html">Đăng ký</a>
+    </p>
+
+    <div class="demo-hint">
+      Tài khoản demo:<br>
+      Admin: admin@travel.com / Admin123!<br>
+      User: user@travel.com / User123!
+    </div>
+  </div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script type="module" src="assets/js/pages/login.js"></script>
+</body>
+</html>

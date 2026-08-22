@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Admin TravelViet</title>
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/components.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body>
+
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <a class="logo" href="../index.html">Du Lịch Việt<span>.vn</span></a>
+    <nav class="admin-nav">
+      <a href="dashboard.html" class="active">📊 Dashboard</a>
+      <a href="tours.html">🧳 Tours</a>
+      <a href="flights.html">✈️ Flights</a>
+      <a href="profile.html">👤 Profile</a>
+    </nav>
+    <div style="padding:20px;">
+      <span style="display:block; color:var(--color-text-muted); font-size:0.85rem; margin-bottom:8px;">Xin chào, <strong id="admin-username"></strong></span>
+      <a href="#" id="admin-logout" style="color:var(--color-danger); font-weight:600;">Đăng xuất</a>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <h1>Dashboard</h1>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-icon">🧳</div>
+        <div class="stat-number" id="stat-tours-month">—</div>
+        <div class="stat-label">Số tour trong tháng</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">✈️</div>
+        <div class="stat-number" id="stat-flights-total">—</div>
+        <div class="stat-label">Số chuyến bay</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🧑‍🤝‍🧑</div>
+        <div class="stat-number" id="stat-tour-bookings">—</div>
+        <div class="stat-label">Số khách đặt tour</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🎫</div>
+        <div class="stat-number" id="stat-flight-bookings">—</div>
+        <div class="stat-label">Số khách đặt chuyến bay</div>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>Top 10 hãng bay được đặt nhiều nhất</h3>
+        <canvas id="airline-bar-chart"></canvas>
+      </div>
+      <div class="chart-card">
+        <h3>Tỷ lệ quốc gia khách đặt tour</h3>
+        <canvas id="country-pie-chart"></canvas>
+      </div>
+    </div>
+
+    <div class="admin-panel">
+      <h3>Top 10 quốc gia được đặt tour nhiều nhất</h3>
+      <table class="admin-table">
+        <thead>
+          <tr><th>Quốc gia</th><th>Số tour</th><th>Số khách đặt vé</th></tr>
+        </thead>
+        <tbody id="country-table-body"></tbody>
+      </table>
+    </div>
+
+    <div class="admin-panel">
+      <h3>Danh sách Tours</h3>
+      <table class="admin-table">
+        <thead>
+          <tr><th>ID</th><th>Tên tour</th><th>Hãng du lịch</th><th>Ngày/Đêm</th><th>Khởi hành</th><th>Giá</th></tr>
+        </thead>
+        <tbody id="tours-table-body"></tbody>
+      </table>
+      <div class="pagination" id="tours-pagination"></div>
+    </div>
+
+    <div class="admin-panel">
+      <h3>Danh sách Chuyến bay</h3>
+      <table class="admin-table">
+        <thead>
+          <tr><th>ID</th><th>Hãng bay</th><th>Tuyến bay</th><th>Ngày giờ bay</th><th>Thời lượng</th><th>Giá phổ thông</th></tr>
+        </thead>
+        <tbody id="flights-table-body"></tbody>
+      </table>
+      <div class="pagination" id="flights-pagination"></div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
+<script type="module" src="../assets/js/pages/admin/dashboard.js"></script>
+</body>
+</html>

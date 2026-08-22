@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quản lý Chuyến bay — Admin TravelViet</title>
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/components.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body>
+
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <a class="logo" href="../index.html">Du Lịch Việt<span>.vn</span></a>
+    <nav class="admin-nav">
+      <a href="dashboard.html">📊 Dashboard</a>
+      <a href="tours.html">🧳 Tours</a>
+      <a href="flights.html" class="active">✈️ Flights</a>
+      <a href="profile.html">👤 Profile</a>
+    </nav>
+    <div style="padding:20px;">
+      <span style="display:block; color:var(--color-text-muted); font-size:0.85rem; margin-bottom:8px;">Xin chào, <strong id="admin-username"></strong></span>
+      <a href="#" id="admin-logout" style="color:var(--color-danger); font-weight:600;">Đăng xuất</a>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <h1>Quản lý Chuyến bay</h1>
+      <a class="btn btn-accent" href="flight-form.html">+ Tạo chuyến bay</a>
+    </div>
+
+    <div class="admin-panel">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th><th>Hãng bay</th><th>Tuyến bay</th><th>Ngày giờ bay</th>
+            <th>Loại vé</th><th>Số chặng</th><th>Giá Phổ thông</th><th>Giá Thương gia</th><th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody id="flights-table-body"></tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script type="module" src="../assets/js/pages/admin/flights.js"></script>
+</body>
+</html>

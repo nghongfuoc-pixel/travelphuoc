@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hồ sơ cá nhân — Admin TravelViet</title>
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/components.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body>
+
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <a class="logo" href="../index.html">Du Lịch Việt<span>.vn</span></a>
+    <nav class="admin-nav">
+      <a href="dashboard.html">📊 Dashboard</a>
+      <a href="tours.html">🧳 Tours</a>
+      <a href="flights.html">✈️ Flights</a>
+      <a href="profile.html" class="active">👤 Profile</a>
+    </nav>
+    <div style="padding:20px;">
+      <span style="display:block; color:var(--color-text-muted); font-size:0.85rem; margin-bottom:8px;">Xin chào, <strong id="admin-username"></strong></span>
+      <a href="#" id="admin-logout" style="color:var(--color-danger); font-weight:600;">Đăng xuất</a>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <h1>Hồ sơ cá nhân</h1>
+    </div>
+
+    <div class="auth-success" id="profile-success">Đã lưu thay đổi thành công.</div>
+
+    <form class="admin-form" id="profile-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="f-username">Username</label>
+          <input id="f-username" type="text" disabled>
+        </div>
+        <div class="form-group">
+          <label for="f-email">Email</label>
+          <input id="f-email" type="email" disabled>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="f-fullname">Họ tên</label>
+          <input id="f-fullname" type="text">
+        </div>
+        <div class="form-group">
+          <label for="f-phone">Số điện thoại</label>
+          <input id="f-phone" type="tel">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="f-role">Vai trò</label>
+        <input id="f-role" type="text" disabled>
+      </div>
+
+      <button type="submit" class="btn btn-accent">Lưu thay đổi</button>
+    </form>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script type="module" src="../assets/js/pages/admin/profile.js"></script>
+</body>
+</html>

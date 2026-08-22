@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chi tiết Tour — Du Lịch Việt (TravelViet)</title>
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/components.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="logo" href="index.html">Du Lịch Việt<span>.vn</span></a>
+    <nav class="main-nav">
+      <a href="index.html">Trang chủ</a>
+      <a href="flights.html">Chuyến bay</a>
+      <a href="tours.html">Tour</a>
+    </nav>
+    <span id="auth-area" class="auth-area"></span>
+    <a class="cart-link" href="cart.html">
+      🛒 Giỏ hàng <span id="cart-count" class="cart-badge">0</span>
+    </a>
+  </div>
+</header>
+
+<main class="detail-page">
+  <div class="container">
+    <img class="tour-detail-image" id="tour-image" src="" alt="">
+    <div class="detail-header" id="tour-overview"></div>
+
+    <h2>Lịch trình chuyến đi</h2>
+    <div id="itinerary"></div>
+
+    <div style="margin-top:24px; text-align:right;">
+      <button class="btn btn-accent" id="select-tour">Chọn tour</button>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast">
+  Đã thêm vào giỏ hàng
+  <a href="cart.html">Xem giỏ hàng</a>
+</div>
+
+<footer class="site-footer">
+  <div class="container">
+    <p>© 2026 Du Lịch Việt (TravelViet) — Website demo, không phải dịch vụ đặt vé thật.</p>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script type="module" src="assets/js/pages/tour-detail.js"></script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+Tôi muốn tạo website lĩnh vực du lịch.
+
+Tên website: Du Lịch Việt (TravelViet)
+Ngôn ngữ lập trình: HTML, CSS, JavaScript, không có backend.
+Database: SQLite
+Background: tông màu sáng, nền trắng
+
+Trang chủ:
+Phần chọn ngày, tìm chuyến bay, điểm xuất phát, điểm đến, vé khứ hồi, vé một chiều. Click Tìm Kiếm dẫn đến trang Chuyến Bay (Flights)
+Phần tour du lịch: 8 tour du lịch nổi bật. Hình thumbnail 600x400, hãng du lịch, số ngày/đêm, giá tour. Click vào dẫn đến trang Tour
+Phần hãng hàng không: hiện các logo của các hãng bay như VietJet Air, Vietnam Airlines, Singapore Airlines... Click vào logo sẽ dẫn đến trang Chuyến Bay (Flights)
+
+Chuyến bay (Flights):
+Bên trái: filter giá vé tăng/giảm dần, vé khứ hồi, vé một chiều, bay thẳng, nhiều thành phố, các hãng hàng không, thời gian cất cánh (giờ), hạng dịch vụ (phổ thông, thương gia)
+Bên phải: các chuyến bay của các hãng, ngày cất cánh, thời gian bay, giá tiền, dịch vụ
+Click chọn chuyến bay sẽ đến trang chi tiết chuyến bay
+
+Chi tiết chuyến bay (Detail Flights):
+Điểm đi, điểm đến, thời gian bay, hãng bay, loại máy bay (Boeing, Airbus...)
+Chọn giá vé: Hạng Phổ Thông, Hạng Thương Gia (giống trong hình)
+Chọn chuyến bay sẽ được lưu vào Giỏ Hàng
+
+Tour
+Bên trái: filter giá vé tăng/giảm dần, các hãng hàng không, thời gian cất cánh (giờ)
+Bên phải: các tour du lịch, hãng bay, ngày cất cánh, thời gian bay, giá tiền, dịch vụ
+Click chọn tour sẽ đến trang chi tiết tour
+
+Chi tiết Tour (Tour):
+Điểm đi, điểm đến, thời gian bay, hãng bay, loại máy bay (Boeing, Airbus...)
+Lịch trình chuyến đi
+Chọn tour sẽ được lưu vào Giỏ Hàng
+
+Giỏ Hàng
+Xem các chuyến bay, tour đã chọn. Có thể xóa giỏ hàng.
+Nhập thông tin cá nhân
+Đăng ký -> Thông báo hoàn thành.
+Một email gửi từ nvhai061993@gmail đến email của khách hàng.
+
+Trang Login, Register, ForgotPassword
+Username từ 5 đến 15 ký tự, không có ký tự đặc biệt
+Password từ 5 đến 15 ký tự
+Tạo sẵn tài khoản đăng nhập
+admin@travel.com Admin123!
+user@travel.com User123!
+
+Trang Admin có thêm Menu Sidebar:
+Dashboard
+Tours -> Quản lý tour và Tạo Tour
+Flights -> Quản lý chuyến bay và Tạo Chuyến Bay
+Profile
+
+Dashboard:
+4 ô đầu tiên:
+Số tour trong tháng
+Số chuyến bay
+Số khách đặt tour
+Số khách đặt chuyến bay
+
+Biểu đồ cột: 10 hãng bay được đặt nhiều nhất
+Chart Pie: tỷ lệ các nước có nhiều khách đặt tua du lịch
+
+Table 10 nước được khách đặt tour du lịch.
+Các cột: đất nước, số tour, số khách đặt vé
+
+List Tours: danh sách các tour. Phân trang 20 tour/trang
+List Flights: danh sách các chuyến bay . Phân trang 20 chuyến bay/trang
+
+Profile: thông tin cá nhân

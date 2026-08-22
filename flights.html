@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chuyến bay — Du Lịch Việt (TravelViet)</title>
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/components.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="logo" href="index.html">Du Lịch Việt<span>.vn</span></a>
+    <nav class="main-nav">
+      <a href="index.html">Trang chủ</a>
+      <a href="flights.html">Chuyến bay</a>
+      <a href="tours.html">Tour</a>
+    </nav>
+    <span id="auth-area" class="auth-area"></span>
+    <a class="cart-link" href="cart.html">
+      🛒 Giỏ hàng <span id="cart-count" class="cart-badge">0</span>
+    </a>
+  </div>
+</header>
+
+<main>
+  <div class="container filters-layout">
+    <aside class="sidebar">
+      <div class="filter-group">
+        <h4>Sắp xếp</h4>
+        <select id="sort-select">
+          <option value="asc">Giá tăng dần</option>
+          <option value="desc">Giá giảm dần</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <h4>Loại vé</h4>
+        <label class="filter-check"><input type="checkbox" value="roundtrip" data-filter="trip"> Khứ hồi</label>
+        <label class="filter-check"><input type="checkbox" value="oneway" data-filter="trip"> Một chiều</label>
+      </div>
+
+      <div class="filter-group">
+        <h4>Số chặng</h4>
+        <label class="filter-check"><input type="checkbox" value="direct" data-filter="stop"> Bay thẳng</label>
+        <label class="filter-check"><input type="checkbox" value="multi_city" data-filter="stop"> Nhiều thành phố</label>
+      </div>
+
+      <div class="filter-group">
+        <h4>Hạng dịch vụ</h4>
+        <label class="filter-check"><input type="checkbox" value="economy" data-filter="fare"> Phổ thông</label>
+        <label class="filter-check"><input type="checkbox" value="business" data-filter="fare"> Thương gia</label>
+      </div>
+
+      <div class="filter-group">
+        <h4>Giờ cất cánh</h4>
+        <div id="filter-time"></div>
+      </div>
+
+      <div class="filter-group">
+        <h4>Hãng hàng không</h4>
+        <div id="filter-airlines"></div>
+      </div>
+
+      <button class="btn btn-outline" id="clear-filters" style="width:100%">Xoá bộ lọc</button>
+    </aside>
+
+    <section>
+      <div class="results-header">
+        <h2>Kết quả tìm kiếm</h2>
+        <span id="search-summary"></span>
+        <span id="result-count"></span>
+      </div>
+      <div class="list-stack" id="flight-list"></div>
+    </section>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <p>© 2026 Du Lịch Việt (TravelViet) — Website demo, không phải dịch vụ đặt vé thật.</p>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script type="module" src="assets/js/pages/flights.js"></script>
+</body>
+</html>

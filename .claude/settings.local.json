@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(py --version)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:5500/index.html)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js\")",
+      "Bash(curl -s \"https://api.cdnjs.com/libraries/Chart.js?fields=version\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js\")",
+      "Bash(curl -s \"http://localhost:5500/admin/dashboard.html\")",
+      "Bash(curl -s \"https://en.wikipedia.org/api/rest_v1/page/summary/Vietnam_Airlines\")",
+      "Bash(curl -s -I \"https://commons.wikimedia.org/wiki/Special:FilePath/Korean_Air_Logo.svg\")",
+      "Bash(curl -s -o /dev/null -w \"no-width: %{http_code}\\\\n\" -L \"https://commons.wikimedia.org/wiki/Special:FilePath/Korean_Air_Logo.svg\")",
+      "Bash(curl -s -G https://commons.wikimedia.org/w/api.php --data-urlencode action=query --data-urlencode 'titles=File:Korean Air Logo.svg' --data-urlencode prop=imageinfo --data-urlencode 'iiprop=url|mime' --data-urlencode format=json)",
+      "Bash(curl -s -G https://commons.wikimedia.org/w/api.php --data-urlencode action=query --data-urlencode list=search --data-urlencode 'srsearch=incategory:\"Korean Air\" logo' --data-urlencode srnamespace=6 --data-urlencode format=json --data-urlencode srlimit=10)",
+      "Bash(curl -s -G https://commons.wikimedia.org/w/api.php --data-urlencode action=query --data-urlencode 'titles=File:Korean Air logo \\(Hangul\\).svg' --data-urlencode prop=imageinfo --data-urlencode iiprop=url --data-urlencode iiurlwidth=200 --data-urlencode format=json)",
+      "Bash(curl -s -G https://commons.wikimedia.org/w/api.php --data-urlencode action=query --data-urlencode 'titles=File:Vietnam Airlines 2015 wordmark.svg|File:VietJet Air logo.svg|File:Bamboo Airways Logo.svg|File:Vietravel Airlines Logo.png|File:Singapore Airlines Logo.svg|File:AirAsia New Logo \\(2020\\).svg|File:Thai Airways logo.svg|File:Korean Air logo \\(Hangul\\).svg|File:Japan Airlines Wordmark \\(2011\\).svg|File:Emirates logo.svg' --data-urlencode prop=imageinfo --data-urlencode iiprop=url --data-urlencode iiurlwidth=240 --data-urlencode format=json)",
+      "Read(//tmp/**)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Golden_Bridge_at_Ba_Na_Hills_20250718.jpg/800px-Golden_Bridge_at_Ba_Na_Hills_20250718.jpg\")",
+      "Bash(curl -s -o /dev/null -w \"330px: %{http_code}\\\\n\" \"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Golden_Bridge_at_Ba_Na_Hills_20250718.jpg/330px-Golden_Bridge_at_Ba_Na_Hills_20250718.jpg\")",
+      "Bash(curl -s -o /dev/null -w \"600px: %{http_code}\\\\n\" \"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Golden_Bridge_at_Ba_Na_Hills_20250718.jpg/600px-Golden_Bridge_at_Ba_Na_Hills_20250718.jpg\")",
+      "Bash(curl -sv \"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Golden_Bridge_at_Ba_Na_Hills_20250718.jpg/800px-Golden_Bridge_at_Ba_Na_Hills_20250718.jpg\")"
+    ]
+  }
+}

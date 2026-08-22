@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tạo/Sửa Chuyến bay — Admin TravelViet</title>
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/components.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body>
+
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <a class="logo" href="../index.html">Du Lịch Việt<span>.vn</span></a>
+    <nav class="admin-nav">
+      <a href="dashboard.html">📊 Dashboard</a>
+      <a href="tours.html">🧳 Tours</a>
+      <a href="flights.html" class="active">✈️ Flights</a>
+      <a href="profile.html">👤 Profile</a>
+    </nav>
+    <div style="padding:20px;">
+      <span style="display:block; color:var(--color-text-muted); font-size:0.85rem; margin-bottom:8px;">Xin chào, <strong id="admin-username"></strong></span>
+      <a href="#" id="admin-logout" style="color:var(--color-danger); font-weight:600;">Đăng xuất</a>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <h1 id="form-title">Tạo chuyến bay</h1>
+      <a class="btn btn-outline" href="flights.html">← Quay lại danh sách</a>
+    </div>
+
+    <form class="admin-form" id="flight-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="f-airline">Hãng bay</label>
+          <select id="f-airline" required></select>
+        </div>
+        <div class="form-group">
+          <label for="f-aircraft">Loại máy bay</label>
+          <input id="f-aircraft" type="text" placeholder="Airbus A321, Boeing 787..." required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="f-origin">Điểm đi</label>
+          <input id="f-origin" type="text" placeholder="TP.HCM (SGN)" required>
+        </div>
+        <div class="form-group">
+          <label for="f-destination">Điểm đến</label>
+          <input id="f-destination" type="text" placeholder="Đà Nẵng (DAD)" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="f-departure-date">Ngày bay</label>
+          <input id="f-departure-date" type="date" required>
+        </div>
+        <div class="form-group">
+          <label for="f-duration">Thời lượng bay (phút)</label>
+          <input id="f-duration" type="number" min="1" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="f-departure-time">Giờ cất cánh</label>
+          <input id="f-departure-time" type="time" required>
+        </div>
+        <div class="form-group">
+          <label for="f-arrival-time">Giờ hạ cánh</label>
+          <input id="f-arrival-time" type="time" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="f-trip-type">Loại vé</label>
+          <select id="f-trip-type" required>
+            <option value="roundtrip">Khứ hồi</option>
+            <option value="oneway">Một chiều</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="f-stop-type">Số chặng</label>
+          <select id="f-stop-type" required>
+            <option value="direct">Bay thẳng</option>
+            <option value="multi_city">Nhiều thành phố</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="f-price-economy">Giá Phổ thông (VNĐ)</label>
+          <input id="f-price-economy" type="number" min="0" required>
+        </div>
+        <div class="form-group">
+          <label for="f-price-business">Giá Thương gia (VNĐ)</label>
+          <input id="f-price-business" type="number" min="0" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="f-services">Dịch vụ đi kèm</label>
+        <input id="f-services" type="text" placeholder="Hành lý 23kg, suất ăn...">
+      </div>
+
+      <div class="form-group">
+        <label for="f-thumbnail">Ảnh thumbnail (không bắt buộc)</label>
+        <input id="f-thumbnail" type="file" accept="image/*">
+        <img id="thumbnail-preview" src="" alt="" style="display:none; max-width:240px; margin-top:10px; border-radius:8px; border:1px solid var(--color-border);">
+      </div>
+
+      <button type="submit" class="btn btn-accent">Lưu chuyến bay</button>
+    </form>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script type="module" src="../assets/js/pages/admin/flight-form.js"></script>
+</body>
+</html>
