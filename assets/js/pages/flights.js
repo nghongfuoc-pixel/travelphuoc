@@ -1,4 +1,4 @@
-import { q } from '../db/database.js';
+import { getAirlines, getFlightsWithAirline } from '../db/database.js';
 import { formatVND, formatDuration, timeBucket, TIME_BUCKET_LABELS } from '../format.js';
 import { updateCartBadge } from '../cart.js';
 import { renderAuthHeader } from '../auth.js';
@@ -17,12 +17,8 @@ const state = {
 };
 
 async function load() {
-  airlines = await q('SELECT * FROM airlines ORDER BY name');
-  allFlights = await q(`
-    SELECT f.*, a.name AS airline_name, a.logo_url AS airline_logo
-    FROM flights f JOIN airlines a ON a.id = f.airline_id
-    ORDER BY f.departure_date, f.departure_time
-  `);
+  airlines = await getAirlines();
+  allFlights = await getFlightsWithAirline();
   renderSidebar();
   renderSummary();
   applyFiltersAndRender();

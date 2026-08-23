@@ -1,8 +1,8 @@
-import { q, exec } from '../../db/database.js';
+import { getAirlines, getFlightById, insertFlight, updateFlight } from '../../db/database.js';
 import { requireAuth, logout } from '../../auth.js';
 import { readFileAsDataURL } from '../../upload.js';
 
-const session = requireAuth('admin');
+const session = await requireAuth('admin');
 const params = new URLSearchParams(window.location.search);
 const editId = params.get('id') ? Number(params.get('id')) : null;
 let uploadedThumbnail = null;
@@ -21,14 +21,14 @@ document.getElementById('f-thumbnail').addEventListener('change', async (e) => {
 });
 
 async function loadAirlines() {
-  const airlines = await q('SELECT * FROM airlines ORDER BY name');
+  const airlines = await getAirlines();
   document.getElementById('f-airline').innerHTML = airlines.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
 }
 
 async function loadExisting() {
   if (!editId) return;
   document.getElementById('form-title').textContent = 'Sửa chuyến bay';
-  const [f] = await q('SELECT * FROM flights WHERE id = ?', [editId]);
+  const f = await getFlightById(editId);
   if (!f) return;
 
   document.getElementById('f-airline').value = f.airline_id;
@@ -50,37 +50,30 @@ async function loadExisting() {
 document.getElementById('flight-form').addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const existingThumbnail = editId ? (await q('SELECT thumbnail_url FROM flights WHERE id = ?', [editId]))[0]?.thumbnail_url : null;
+  const existingThumbnail = editId ? (await getFlightById(editId))?.thumbnail_url : null;
   const thumbnailUrl = uploadedThumbnail || existingThumbnail || null;
 
-  const data = [
-    Number(document.getElementById('f-airline').value),
-    document.getElementById('f-origin').value.trim(),
-    document.getElementById('f-destination').value.trim(),
-    document.getElementById('f-departure-date').value,
-    document.getElementById('f-departure-time').value,
-    document.getElementById('f-arrival-time').value,
-    Number(document.getElementById('f-duration').value),
-    document.getElementById('f-trip-type').value,
-    document.getElementById('f-stop-type').value,
-    document.getElementById('f-aircraft').value.trim(),
-    Number(document.getElementById('f-price-economy').value),
-    Number(document.getElementById('f-price-business').value),
-    document.getElementById('f-services').value.trim(),
-    thumbnailUrl
-  ];
+  const data = {
+    airline_id: Number(document.getElementById('f-airline').value),
+    origin: document.getElementById('f-origin').value.trim(),
+    destination: document.getElementById('f-destination').value.trim(),
+    departure_date: document.getElementById('f-departure-date').value,
+    departure_time: document.getElementById('f-departure-time').value,
+    arrival_time: document.getElementById('f-arrival-time').value,
+    duration_minutes: Number(document.getElementById('f-duration').value),
+    trip_type: document.getElementById('f-trip-type').value,
+    stop_type: document.getElementById('f-stop-type').value,
+    aircraft_type: document.getElementById('f-aircraft').value.trim(),
+    price_economy: Number(document.getElementById('f-price-economy').value),
+    price_business: Number(document.getElementById('f-price-business').value),
+    services: document.getElementById('f-services').value.trim(),
+    thumbnail_url: thumbnailUrl
+  };
 
   if (editId) {
-    await exec(
-      `UPDATE flights SET airline_id=?, origin=?, destination=?, departure_date=?, departure_time=?, arrival_time=?, duration_minutes=?, trip_type=?, stop_type=?, aircraft_type=?, price_economy=?, price_business=?, services=?, thumbnail_url=? WHERE id=?`,
-      [...data, editId]
-    );
+    await updateFlight(editId, data);
   } else {
-    await exec(
-      `INSERT INTO flights (airline_id, origin, destination, departure_date, departure_time, arrival_time, duration_minutes, trip_type, stop_type, aircraft_type, price_economy, price_business, services, thumbnail_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      data
-    );
+    await insertFlight(data);
   }
 
   window.location.href = 'flights.html';

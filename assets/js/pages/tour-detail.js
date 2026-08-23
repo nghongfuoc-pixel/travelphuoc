@@ -1,4 +1,4 @@
-import { q } from '../db/database.js';
+import { getTourById, getTourItinerary } from '../db/database.js';
 import { formatVND, formatDuration } from '../format.js';
 import { addToCart, updateCartBadge } from '../cart.js';
 import { renderAuthHeader } from '../auth.js';
@@ -7,10 +7,7 @@ const params = new URLSearchParams(window.location.search);
 const id = Number(params.get('id'));
 
 async function load() {
-  const [tour] = await q(`
-    SELECT t.*, a.name AS airline_name, a.logo_url AS airline_logo
-    FROM tours t JOIN airlines a ON a.id = t.airline_id WHERE t.id = ?
-  `, [id]);
+  const tour = await getTourById(id);
 
   if (!tour) {
     document.getElementById('tour-overview').innerHTML = '<p class="empty-state">Không tìm thấy tour.</p>';
@@ -30,7 +27,7 @@ async function load() {
     </div>
   `;
 
-  const itinerary = await q('SELECT * FROM tour_itinerary WHERE tour_id = ? ORDER BY day_number', [id]);
+  const itinerary = await getTourItinerary(id);
   document.getElementById('itinerary').innerHTML = itinerary.map(it => `
     <div class="itinerary-day">
       <div class="itinerary-day-number">Ngày ${it.day_number}</div>

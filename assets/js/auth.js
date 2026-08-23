@@ -1,40 +1,52 @@
-import { q, exec } from './db/database.js';
-import { sha256Hex } from './crypto.js';
+import { supabase, getProfile } from './db/database.js';
 import { validateUsername, validatePassword, validateEmail } from './validators.js';
-
-const SESSION_KEY = 'travelviet_auth_session';
 
 function isAdminPage() {
   return window.location.pathname.includes('/admin/');
 }
 
-export function getSession() {
-  const raw = sessionStorage.getItem(SESSION_KEY);
-  return raw ? JSON.parse(raw) : null;
+async function buildSession(supaUser) {
+  if (!supaUser) return null;
+  const profile = await getProfile(supaUser.id);
+  if (!profile) return null;
+  return {
+    userId: supaUser.id,
+    username: profile.username,
+    email: supaUser.email,
+    role: profile.role,
+    fullName: profile.full_name,
+    phone: profile.phone
+  };
 }
 
-function setSession(session) {
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+export async function getSession() {
+  const { data, error } = await supabase.auth.getSession();
+  if (error || !data.session) return null;
+  return buildSession(data.session.user);
 }
 
-export function logout() {
-  sessionStorage.removeItem(SESSION_KEY);
+export async function logout() {
+  await supabase.auth.signOut();
   window.location.href = (isAdminPage() ? '../' : '') + 'login.html';
 }
 
+function mapAuthError(err) {
+  const msg = err?.message || '';
+  if (msg.includes('Invalid login credentials')) return 'Tài khoản hoặc mật khẩu không đúng.';
+  if (msg.includes('already registered') || msg.includes('duplicate key')) return 'Username hoặc email đã được sử dụng.';
+  if (msg.includes('Email not confirmed')) return 'Vui lòng xác nhận email trước khi đăng nhập.';
+  return msg || 'Đã có lỗi xảy ra.';
+}
+
 export async function login(identifier, password) {
-  const rows = await q('SELECT * FROM users WHERE email = ? OR username = ?', [identifier, identifier]);
-  const user = rows[0];
-  if (!user) throw new Error('Tài khoản không tồn tại.');
+  if (!identifier.includes('@')) {
+    throw new Error('Vui lòng đăng nhập bằng email.');
+  }
+  const { data, error } = await supabase.auth.signInWithPassword({ email: identifier, password });
+  if (error) throw new Error(mapAuthError(error));
 
-  const hash = await sha256Hex(password);
-  if (hash !== user.password_hash) throw new Error('Mật khẩu không đúng.');
-
-  const session = {
-    userId: user.id, username: user.username, email: user.email,
-    role: user.role, fullName: user.full_name, phone: user.phone
-  };
-  setSession(session);
+  const session = await buildSession(data.user);
+  if (!session) throw new Error('Không tìm thấy hồ sơ tài khoản.');
   return session;
 }
 
@@ -48,23 +60,21 @@ export async function register({ username, email, password, fullName = '', phone
   const emailError = validateEmail(email);
   if (emailError) throw new Error(emailError);
 
-  const existing = await q('SELECT id FROM users WHERE email = ? OR username = ?', [email, username]);
-  if (existing.length) throw new Error('Username hoặc email đã được sử dụng.');
-
-  const hash = await sha256Hex(password);
-  await exec(
-    "INSERT INTO users (username, email, password_hash, full_name, phone, role, created_at) VALUES (?, ?, ?, ?, ?, 'user', ?)",
-    [username, email, hash, fullName, phone, new Date().toISOString()]
-  );
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { username, full_name: fullName, phone } }
+  });
+  if (error) throw new Error(mapAuthError(error));
 }
 
 export async function forgotPassword(email) {
-  const rows = await q('SELECT id FROM users WHERE email = ?', [email]);
-  return rows.length > 0;
+  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  return !error;
 }
 
-export function requireAuth(role = null) {
-  const session = getSession();
+export async function requireAuth(role = null) {
+  const session = await getSession();
   const prefix = isAdminPage() ? '../' : '';
 
   if (!session) {
@@ -79,11 +89,11 @@ export function requireAuth(role = null) {
   return session;
 }
 
-export function renderAuthHeader() {
+export async function renderAuthHeader() {
   const area = document.getElementById('auth-area');
   if (!area) return;
 
-  const session = getSession();
+  const session = await getSession();
   const prefix = isAdminPage() ? '../' : '';
 
   if (session) {

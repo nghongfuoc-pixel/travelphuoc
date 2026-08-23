@@ -1,15 +1,11 @@
-import { q, exec } from '../../db/database.js';
+import { getAdminFlightsWithAirline, deleteFlight } from '../../db/database.js';
 import { formatVND } from '../../format.js';
 import { requireAuth, logout } from '../../auth.js';
 
-const session = requireAuth('admin');
+const session = await requireAuth('admin');
 
 async function loadFlights() {
-  const flights = await q(`
-    SELECT f.*, a.name AS airline_name FROM flights f
-    JOIN airlines a ON a.id = f.airline_id
-    ORDER BY f.id
-  `);
+  const flights = await getAdminFlightsWithAirline();
 
   document.getElementById('flights-table-body').innerHTML = flights.map(f => `
     <tr>
@@ -31,7 +27,7 @@ async function loadFlights() {
   document.querySelectorAll('[data-delete]').forEach(btn => {
     btn.addEventListener('click', async () => {
       if (!confirm('Xoá chuyến bay này? Hành động không thể hoàn tác.')) return;
-      await exec('DELETE FROM flights WHERE id = ?', [Number(btn.dataset.delete)]);
+      await deleteFlight(Number(btn.dataset.delete));
       loadFlights();
     });
   });

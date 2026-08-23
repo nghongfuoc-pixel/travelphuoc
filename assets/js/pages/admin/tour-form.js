@@ -1,8 +1,10 @@
-import { q, exec, genItinerary } from '../../db/database.js';
+import {
+  getAirlines, getCountries, getTourById, insertTour, updateTour, deleteTourItinerary, insertTourItinerary, genItinerary
+} from '../../db/database.js';
 import { requireAuth, logout } from '../../auth.js';
 import { readFileAsDataURL } from '../../upload.js';
 
-const session = requireAuth('admin');
+const session = await requireAuth('admin');
 const params = new URLSearchParams(window.location.search);
 const editId = params.get('id') ? Number(params.get('id')) : null;
 let uploadedThumbnail = null;
@@ -21,8 +23,8 @@ document.getElementById('f-thumbnail').addEventListener('change', async (e) => {
 });
 
 async function loadOptions() {
-  const airlines = await q('SELECT * FROM airlines ORDER BY name');
-  const countries = await q('SELECT * FROM countries ORDER BY name');
+  const airlines = await getAirlines();
+  const countries = await getCountries();
   document.getElementById('f-airline').innerHTML = airlines.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
   document.getElementById('f-country').innerHTML = countries.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 }
@@ -30,7 +32,7 @@ async function loadOptions() {
 async function loadExisting() {
   if (!editId) return;
   document.getElementById('form-title').textContent = 'Sửa tour';
-  const [t] = await q('SELECT * FROM tours WHERE id = ?', [editId]);
+  const t = await getTourById(editId);
   if (!t) return;
 
   document.getElementById('f-name').value = t.name;
@@ -72,36 +74,25 @@ document.getElementById('tour-form').addEventListener('submit', async (e) => {
     featured: document.getElementById('f-featured').checked ? 1 : 0
   };
 
-  const existingThumbnail = editId ? (await q('SELECT thumbnail_url FROM tours WHERE id = ?', [editId]))[0]?.thumbnail_url : null;
+  const existingThumbnail = editId ? (await getTourById(editId))?.thumbnail_url : null;
   const thumbnailUrl = uploadedThumbnail || existingThumbnail || `https://placehold.co/600x400/0F79E0/FFFFFF?text=${encodeURIComponent(data.destination)}`;
   let tourId = editId;
 
+  const row = {
+    name: data.name, operator: data.operator, thumbnail_url: thumbnailUrl, days: data.days, nights: data.nights,
+    price: data.price, origin: data.origin, destination: data.destination, departure_date: data.departureDate,
+    departure_time: data.departureTime, duration_minutes: data.duration, airline_id: data.airlineId,
+    aircraft_type: data.aircraft, country_id: data.countryId, services: data.services, featured: !!data.featured
+  };
+
   if (editId) {
-    await exec(
-      `UPDATE tours SET name=?, operator=?, thumbnail_url=?, days=?, nights=?, price=?, origin=?, destination=?, departure_date=?, departure_time=?, duration_minutes=?, airline_id=?, aircraft_type=?, country_id=?, services=?, featured=? WHERE id=?`,
-      [data.name, data.operator, thumbnailUrl, data.days, data.nights, data.price, data.origin, data.destination,
-        data.departureDate, data.departureTime, data.duration, data.airlineId, data.aircraft, data.countryId,
-        data.services, data.featured, editId]
-    );
-    await exec('DELETE FROM tour_itinerary WHERE tour_id = ?', [editId]);
+    await updateTour(editId, row);
+    await deleteTourItinerary(editId);
   } else {
-    await exec(
-      `INSERT INTO tours (name, operator, thumbnail_url, days, nights, price, origin, destination, departure_date, departure_time, duration_minutes, airline_id, aircraft_type, country_id, services, featured)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [data.name, data.operator, thumbnailUrl, data.days, data.nights, data.price, data.origin, data.destination,
-        data.departureDate, data.departureTime, data.duration, data.airlineId, data.aircraft, data.countryId,
-        data.services, data.featured]
-    );
-    const [{ id }] = await q('SELECT id FROM tours ORDER BY id DESC LIMIT 1');
-    tourId = id;
+    tourId = await insertTour(row);
   }
 
-  for (const it of genItinerary(data.destination, data.days)) {
-    await exec(
-      'INSERT INTO tour_itinerary (tour_id, day_number, title, description) VALUES (?, ?, ?, ?)',
-      [tourId, it.day, it.title, it.description]
-    );
-  }
+  await insertTourItinerary(tourId, genItinerary(data.destination, data.days));
 
   window.location.href = 'tours.html';
 });

@@ -1,10 +1,10 @@
-import { q } from '../db/database.js';
+import { getFeaturedTours, getAirlines, getFlightRoutePoints } from '../db/database.js';
 import { formatVND } from '../format.js';
 import { updateCartBadge } from '../cart.js';
 import { renderAuthHeader } from '../auth.js';
 
 async function renderFeaturedTours() {
-  const tours = await q('SELECT * FROM tours WHERE featured = 1 ORDER BY id LIMIT 8');
+  const tours = await getFeaturedTours();
   const grid = document.getElementById('featured-tours');
   grid.innerHTML = tours.map(t => `
     <a class="tour-card" href="tour-detail.html?id=${t.id}">
@@ -22,20 +22,19 @@ async function renderFeaturedTours() {
 }
 
 async function renderRouteOptions() {
-  const origins = await q('SELECT DISTINCT origin FROM flights ORDER BY origin');
-  const destinations = await q('SELECT DISTINCT destination FROM flights ORDER BY destination');
+  const { origins, destinations } = await getFlightRoutePoints();
 
   document.getElementById('from-input').innerHTML =
     '<option value="" disabled selected>Chọn điểm đi</option>' +
-    origins.map(r => `<option value="${r.origin}">${r.origin}</option>`).join('');
+    origins.map(o => `<option value="${o}">${o}</option>`).join('');
 
   document.getElementById('to-input').innerHTML =
     '<option value="" disabled selected>Chọn điểm đến</option>' +
-    destinations.map(r => `<option value="${r.destination}">${r.destination}</option>`).join('');
+    destinations.map(d => `<option value="${d}">${d}</option>`).join('');
 }
 
 async function renderAirlines() {
-  const airlines = await q('SELECT * FROM airlines ORDER BY id');
+  const airlines = await getAirlines();
   const wrap = document.getElementById('airline-list');
   wrap.innerHTML = airlines.map(a => `
     <a class="airline-logo" href="flights.html?airline=${a.id}">

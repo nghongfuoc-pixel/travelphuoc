@@ -1,4 +1,4 @@
-import { q } from '../db/database.js';
+import { getFlightById } from '../db/database.js';
 import { formatVND, formatDuration } from '../format.js';
 import { addToCart, updateCartBadge } from '../cart.js';
 import { renderAuthHeader } from '../auth.js';
@@ -7,10 +7,7 @@ const params = new URLSearchParams(window.location.search);
 const id = Number(params.get('id'));
 
 async function load() {
-  const [flight] = await q(`
-    SELECT f.*, a.name AS airline_name, a.logo_url AS airline_logo
-    FROM flights f JOIN airlines a ON a.id = f.airline_id WHERE f.id = ?
-  `, [id]);
+  const flight = await getFlightById(id);
 
   if (!flight) {
     document.getElementById('flight-overview').innerHTML = '<p class="empty-state">Không tìm thấy chuyến bay.</p>';

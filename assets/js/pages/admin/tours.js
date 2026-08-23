@@ -1,11 +1,11 @@
-import { q, exec } from '../../db/database.js';
+import { getAdminTours, deleteTour } from '../../db/database.js';
 import { formatVND } from '../../format.js';
 import { requireAuth, logout } from '../../auth.js';
 
-const session = requireAuth('admin');
+const session = await requireAuth('admin');
 
 async function loadTours() {
-  const tours = await q('SELECT * FROM tours ORDER BY id');
+  const tours = await getAdminTours();
   document.getElementById('tours-table-body').innerHTML = tours.map(t => `
     <tr>
       <td>${t.id}</td>
@@ -27,8 +27,7 @@ async function loadTours() {
     btn.addEventListener('click', async () => {
       if (!confirm('Xoá tour này? Hành động không thể hoàn tác.')) return;
       const id = Number(btn.dataset.delete);
-      await exec('DELETE FROM tour_itinerary WHERE tour_id = ?', [id]);
-      await exec('DELETE FROM tours WHERE id = ?', [id]);
+      await deleteTour(id);
       loadTours();
     });
   });

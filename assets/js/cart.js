@@ -1,4 +1,8 @@
-import { q, exec } from './db/database.js';
+import {
+  getCartItemsBySession, addCartItem, removeCartItem as removeCartItemDb, clearCartBySession,
+  cartCountBySession, getFlightById, getTourById, createOrder, createOrderItems
+} from './db/database.js';
+import { getSession } from './auth.js';
 
 const SESSION_KEY = 'travelviet_session_id';
 
@@ -12,24 +16,18 @@ export function getSessionId() {
 }
 
 export async function addToCart({ itemType, itemId, fareClass = null, price }) {
-  await exec(
-    'INSERT INTO cart_items (session_id, item_type, item_id, fare_class, price, added_at) VALUES (?, ?, ?, ?, ?, ?)',
-    [getSessionId(), itemType, itemId, fareClass, price, new Date().toISOString()]
-  );
+  await addCartItem({ sessionId: getSessionId(), itemType, itemId, fareClass, price });
 }
 
 export async function getCartItems() {
-  const rows = await q('SELECT * FROM cart_items WHERE session_id = ? ORDER BY added_at DESC', [getSessionId()]);
+  const rows = await getCartItemsBySession(getSessionId());
   const detailed = [];
   for (const row of rows) {
     if (row.item_type === 'flight') {
-      const [flight] = await q(
-        'SELECT f.*, a.name AS airline_name FROM flights f JOIN airlines a ON a.id = f.airline_id WHERE f.id = ?',
-        [row.item_id]
-      );
+      const flight = await getFlightById(row.item_id);
       detailed.push({ ...row, flight });
     } else {
-      const [tour] = await q('SELECT * FROM tours WHERE id = ?', [row.item_id]);
+      const tour = await getTourById(row.item_id);
       detailed.push({ ...row, tour });
     }
   }
@@ -37,37 +35,28 @@ export async function getCartItems() {
 }
 
 export async function removeCartItem(id) {
-  await exec('DELETE FROM cart_items WHERE id = ?', [id]);
+  await removeCartItemDb(id);
 }
 
 export async function clearCart() {
-  await exec('DELETE FROM cart_items WHERE session_id = ?', [getSessionId()]);
+  await clearCartBySession(getSessionId());
 }
 
 export async function cartCount() {
-  const rows = await q('SELECT COUNT(*) AS c FROM cart_items WHERE session_id = ?', [getSessionId()]);
-  return rows[0].c;
+  return cartCountBySession(getSessionId());
 }
 
 export async function checkout({ name, email, phone }) {
+  const session = await getSession();
+  if (!session) throw new Error('Vui lòng đăng nhập trước khi đặt chỗ.');
+
   const items = await getCartItems();
   const total = items.reduce((sum, it) => sum + it.price, 0);
-  const now = new Date().toISOString();
 
-  await exec(
-    "INSERT INTO orders (customer_name, email, phone, total_price, status, created_at) VALUES (?, ?, ?, ?, 'confirmed', ?)",
-    [name, email, phone, total, now]
-  );
-  const [{ id: orderId }] = await q('SELECT id FROM orders ORDER BY id DESC LIMIT 1');
-
-  for (const it of items) {
-    await exec(
-      'INSERT INTO order_items (order_id, item_type, item_id, fare_class, price) VALUES (?, ?, ?, ?, ?)',
-      [orderId, it.item_type, it.item_id, it.fare_class, it.price]
-    );
-  }
-
+  const orderId = await createOrder({ userId: session.userId, name, email, phone, total });
+  await createOrderItems(orderId, items);
   await clearCart();
+
   return { orderId, total };
 }
 

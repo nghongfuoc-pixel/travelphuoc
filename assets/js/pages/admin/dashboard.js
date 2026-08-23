@@ -1,8 +1,8 @@
-import { q } from '../../db/database.js';
+import { getDashboardStats, getAirlineBookingStats, getCountryBookingStats, getAdminTours, getAdminFlightsWithAirline } from '../../db/database.js';
 import { formatVND, formatDuration } from '../../format.js';
 import { requireAuth, logout } from '../../auth.js';
 
-const session = requireAuth('admin');
+const session = await requireAuth('admin');
 
 const PAGE_SIZE = 20;
 let toursPage = 1;
@@ -11,27 +11,16 @@ let allTours = [];
 let allFlights = [];
 
 async function loadStats() {
-  const [toursThisMonth] = await q(`SELECT COUNT(*) AS c FROM tours WHERE strftime('%Y-%m', departure_date) = strftime('%Y-%m','now')`);
-  const [flightsTotal] = await q('SELECT COUNT(*) AS c FROM flights');
-  const [tourBookings] = await q(`SELECT COUNT(*) AS c FROM order_items WHERE item_type = 'tour'`);
-  const [flightBookings] = await q(`SELECT COUNT(*) AS c FROM order_items WHERE item_type = 'flight'`);
+  const stats = await getDashboardStats();
 
-  document.getElementById('stat-tours-month').textContent = toursThisMonth.c;
-  document.getElementById('stat-flights-total').textContent = flightsTotal.c;
-  document.getElementById('stat-tour-bookings').textContent = tourBookings.c;
-  document.getElementById('stat-flight-bookings').textContent = flightBookings.c;
+  document.getElementById('stat-tours-month').textContent = stats.toursThisMonth;
+  document.getElementById('stat-flights-total').textContent = stats.flightsTotal;
+  document.getElementById('stat-tour-bookings').textContent = stats.tourBookings;
+  document.getElementById('stat-flight-bookings').textContent = stats.flightBookings;
 }
 
 async function loadBarChart() {
-  const rows = await q(`
-    SELECT a.name AS airline, COUNT(*) AS bookings
-    FROM order_items oi
-    JOIN flights f ON f.id = oi.item_id AND oi.item_type = 'flight'
-    JOIN airlines a ON a.id = f.airline_id
-    GROUP BY a.id
-    ORDER BY bookings DESC
-    LIMIT 10
-  `);
+  const rows = await getAirlineBookingStats();
 
   new Chart(document.getElementById('airline-bar-chart'), {
     type: 'bar',
@@ -53,14 +42,7 @@ async function loadBarChart() {
 }
 
 async function loadPieChart() {
-  const rows = await q(`
-    SELECT c.name AS country, COUNT(*) AS bookings
-    FROM order_items oi
-    JOIN tours t ON t.id = oi.item_id AND oi.item_type = 'tour'
-    JOIN countries c ON c.id = t.country_id
-    GROUP BY c.id
-    ORDER BY bookings DESC
-  `);
+  const rows = (await getCountryBookingStats()).map(r => ({ country: r.country, bookings: r.booking_count }));
 
   const palette = ['#0F79E0', '#00B894', '#FF7A00', '#E11D48', '#8B5CF6', '#F59E0B', '#14B8A6', '#EC4899', '#64748B', '#22C55E'];
 
@@ -81,15 +63,7 @@ async function loadPieChart() {
 }
 
 async function loadCountryTable() {
-  const rows = await q(`
-    SELECT c.name AS country, COUNT(DISTINCT t.id) AS tour_count, COUNT(oi.id) AS booking_count
-    FROM order_items oi
-    JOIN tours t ON t.id = oi.item_id AND oi.item_type = 'tour'
-    JOIN countries c ON c.id = t.country_id
-    GROUP BY c.id
-    ORDER BY booking_count DESC
-    LIMIT 10
-  `);
+  const rows = (await getCountryBookingStats()).slice(0, 10);
 
   document.getElementById('country-table-body').innerHTML = rows.map(r => `
     <tr>
@@ -147,12 +121,8 @@ function renderFlightsTable() {
 }
 
 async function loadLists() {
-  allTours = await q('SELECT * FROM tours ORDER BY departure_date');
-  allFlights = await q(`
-    SELECT f.*, a.name AS airline_name FROM flights f
-    JOIN airlines a ON a.id = f.airline_id
-    ORDER BY f.departure_date, f.departure_time
-  `);
+  allTours = await getAdminTours();
+  allFlights = await getAdminFlightsWithAirline();
   renderToursTable();
   renderFlightsTable();
 }

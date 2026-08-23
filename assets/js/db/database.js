@@ -1,31 +1,23 @@
-import { SCHEMA_SQL } from './schema.js';
-import { AIRLINES, COUNTRIES, TOURS, FLIGHTS, USERS, ORDER_CUSTOMERS } from './seed-data.js';
-import { sha256Hex } from '../crypto.js';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../supabase-config.js';
 
-const SQL_JS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/';
-const STORAGE_KEY = 'travelviet_db_v6';
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let dbPromise = null;
-
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = src;
-    script.onload = resolve;
-    script.onerror = reject;
-    document.head.appendChild(script);
-  });
+function unwrap({ data, error }) {
+  if (error) throw error;
+  return data;
 }
 
-function persist(db) {
-  const data = db.export();
-  let binary = '';
-  for (let i = 0; i < data.length; i++) binary += String.fromCharCode(data[i]);
-  localStorage.setItem(STORAGE_KEY, btoa(binary));
+async function countRows(builder) {
+  const { count, error } = await builder;
+  if (error) throw error;
+  return count || 0;
 }
 
-function lastId(db) {
-  return db.exec('SELECT last_insert_rowid() AS id')[0].values[0][0];
+function flattenAirline(row) {
+  if (!row) return row;
+  const { airline, ...rest } = row;
+  return { ...rest, airline_name: airline?.name, airline_logo: airline?.logo_url };
 }
 
 export function genItinerary(destination, days) {
@@ -52,150 +44,229 @@ export function genItinerary(destination, days) {
   return items;
 }
 
-function daysAgoIso(days) {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  d.setHours(9, 0, 0, 0);
-  return d.toISOString();
+// ---------- Catalog (public read) ----------
+
+export async function getFeaturedTours() {
+  return unwrap(await supabase.from('tours').select('*').eq('featured', true).order('id').limit(8));
 }
 
-function seedOrders(db, tourRecords, flightRecords) {
-  let customerIndex = 0;
-  let dayOffset = 2;
-
-  function nextCustomer() {
-    const c = ORDER_CUSTOMERS[customerIndex % ORDER_CUSTOMERS.length];
-    customerIndex++;
-    return c;
-  }
-
-  function createOrder(items) {
-    const customer = nextCustomer();
-    const createdAt = daysAgoIso(dayOffset);
-    dayOffset += 3;
-    const total = items.reduce((sum, it) => sum + it.price, 0);
-    db.run(
-      "INSERT INTO orders (customer_name, email, phone, total_price, status, created_at) VALUES (?, ?, ?, ?, 'confirmed', ?)",
-      [customer.name, customer.email, customer.phone, total, createdAt]
-    );
-    const orderId = lastId(db);
-    items.forEach(it => {
-      db.run(
-        'INSERT INTO order_items (order_id, item_type, item_id, fare_class, price) VALUES (?, ?, ?, ?, ?)',
-        [orderId, it.type, it.id, it.fareClass || null, it.price]
-      );
-    });
-  }
-
-  flightRecords.forEach(f => {
-    createOrder([{ type: 'flight', id: f.id, fareClass: 'economy', price: f.priceEconomy }]);
-  });
-
-  tourRecords.forEach(t => {
-    createOrder([{ type: 'tour', id: t.id, price: t.price }]);
-  });
+export async function getAirlines() {
+  return unwrap(await supabase.from('airlines').select('*').order('name'));
 }
 
-async function seedDatabase(db) {
-  db.run('BEGIN TRANSACTION');
-
-  for (const u of USERS) {
-    const hash = await sha256Hex(u.password);
-    db.run(
-      'INSERT INTO users (username, email, password_hash, full_name, phone, role, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [u.username, u.email, hash, u.fullName, u.phone, u.role, new Date().toISOString()]
-    );
-  }
-
-  const airlineIds = {};
-  AIRLINES.forEach(a => {
-    db.run('INSERT INTO airlines (name, code, logo_url) VALUES (?, ?, ?)', [a.name, a.code, a.logoUrl]);
-    airlineIds[a.name] = lastId(db);
-  });
-
-  const countryIds = {};
-  COUNTRIES.forEach(name => {
-    db.run('INSERT INTO countries (name) VALUES (?)', [name]);
-    countryIds[name] = lastId(db);
-  });
-
-  const tourRecords = [];
-  TOURS.forEach(t => {
-    db.run(
-      `INSERT INTO tours (name, operator, thumbnail_url, days, nights, price, origin, destination, departure_date, departure_time, duration_minutes, airline_id, aircraft_type, country_id, services, featured)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        t.name, t.operator, t.thumbnailUrl, t.days, t.nights, t.price, t.origin, t.destination,
-        t.departureDate, t.departureTime, t.durationMinutes, airlineIds[t.airline], t.aircraft,
-        countryIds[t.country], t.services, t.featured
-      ]
-    );
-    const tourId = lastId(db);
-    tourRecords.push({ id: tourId, price: t.price });
-    genItinerary(t.destination, t.days).forEach(it => {
-      db.run(
-        'INSERT INTO tour_itinerary (tour_id, day_number, title, description) VALUES (?, ?, ?, ?)',
-        [tourId, it.day, it.title, it.description]
-      );
-    });
-  });
-
-  const flightRecords = [];
-  FLIGHTS.forEach(f => {
-    db.run(
-      `INSERT INTO flights (airline_id, origin, destination, departure_date, departure_time, arrival_time, duration_minutes, trip_type, stop_type, aircraft_type, price_economy, price_business, services, thumbnail_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
-      [
-        airlineIds[f.airline], f.origin, f.destination, f.departureDate, f.departureTime, f.arrivalTime,
-        f.durationMinutes, f.tripType, f.stopType, f.aircraft, f.priceEconomy, f.priceBusiness, f.services
-      ]
-    );
-    flightRecords.push({ id: lastId(db), priceEconomy: f.priceEconomy });
-  });
-
-  seedOrders(db, tourRecords, flightRecords);
-
-  db.run('COMMIT');
+export async function getCountries() {
+  return unwrap(await supabase.from('countries').select('*').order('name'));
 }
 
-async function getDb() {
-  if (dbPromise) return dbPromise;
-
-  dbPromise = (async () => {
-    if (!window.initSqlJs) {
-      await loadScript(SQL_JS_CDN + 'sql-wasm.js');
-    }
-    const SQL = await window.initSqlJs({ locateFile: f => SQL_JS_CDN + f });
-
-    const saved = localStorage.getItem(STORAGE_KEY);
-    let db;
-    if (saved) {
-      const binary = Uint8Array.from(atob(saved), c => c.charCodeAt(0));
-      db = new SQL.Database(binary);
-    } else {
-      db = new SQL.Database();
-      db.run(SCHEMA_SQL);
-      await seedDatabase(db);
-      persist(db);
-    }
-    return db;
-  })();
-
-  return dbPromise;
+export async function getFlightRoutePoints() {
+  const rows = unwrap(await supabase.from('flights').select('origin, destination'));
+  const origins = [...new Set(rows.map(r => r.origin))].sort();
+  const destinations = [...new Set(rows.map(r => r.destination))].sort();
+  return { origins, destinations };
 }
 
-export async function q(sql, params = []) {
-  const db = await getDb();
-  const stmt = db.prepare(sql);
-  stmt.bind(params);
-  const rows = [];
-  while (stmt.step()) rows.push(stmt.getAsObject());
-  stmt.free();
-  return rows;
+export async function getFlightsWithAirline() {
+  const rows = unwrap(await supabase
+    .from('flights')
+    .select('*, airline:airlines(name, logo_url)')
+    .order('departure_date')
+    .order('departure_time'));
+  return rows.map(flattenAirline);
 }
 
-export async function exec(sql, params = []) {
-  const db = await getDb();
-  db.run(sql, params);
-  persist(db);
+export async function getFlightById(id) {
+  const { data, error } = await supabase
+    .from('flights')
+    .select('*, airline:airlines(name, logo_url)')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return flattenAirline(data);
+}
+
+export async function getToursWithAirline() {
+  const rows = unwrap(await supabase
+    .from('tours')
+    .select('*, airline:airlines(name, logo_url)')
+    .order('departure_date'));
+  return rows.map(flattenAirline);
+}
+
+export async function getTourById(id) {
+  const { data, error } = await supabase
+    .from('tours')
+    .select('*, airline:airlines(name, logo_url)')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw error;
+  return flattenAirline(data);
+}
+
+export async function getTourItinerary(tourId) {
+  return unwrap(await supabase.from('tour_itinerary').select('*').eq('tour_id', tourId).order('day_number'));
+}
+
+// ---------- Cart ----------
+
+export async function getCartItemsBySession(sessionId) {
+  return unwrap(await supabase.from('cart_items').select('*').eq('session_id', sessionId).order('added_at', { ascending: false }));
+}
+
+export async function addCartItem({ sessionId, itemType, itemId, fareClass, price }) {
+  unwrap(await supabase.from('cart_items').insert({
+    session_id: sessionId, item_type: itemType, item_id: itemId, fare_class: fareClass, price
+  }));
+}
+
+export async function removeCartItem(id) {
+  const { error } = await supabase.from('cart_items').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function clearCartBySession(sessionId) {
+  const { error } = await supabase.from('cart_items').delete().eq('session_id', sessionId);
+  if (error) throw error;
+}
+
+export async function cartCountBySession(sessionId) {
+  return countRows(supabase.from('cart_items').select('*', { count: 'exact', head: true }).eq('session_id', sessionId));
+}
+
+// ---------- Orders ----------
+
+export async function createOrder({ userId, name, email, phone, total }) {
+  const { data, error } = await supabase
+    .from('orders')
+    .insert({ user_id: userId, customer_name: name, email, phone, total_price: total, status: 'confirmed' })
+    .select('id')
+    .single();
+  if (error) throw error;
+  return data.id;
+}
+
+export async function createOrderItems(orderId, items) {
+  const rows = items.map(it => ({
+    order_id: orderId, item_type: it.item_type, item_id: it.item_id, fare_class: it.fare_class, price: it.price
+  }));
+  const { error } = await supabase.from('order_items').insert(rows);
+  if (error) throw error;
+}
+
+// ---------- Admin: tours/flights CRUD ----------
+
+export async function getAdminTours() {
+  return unwrap(await supabase.from('tours').select('*').order('id'));
+}
+
+export async function getAdminFlightsWithAirline() {
+  const rows = unwrap(await supabase.from('flights').select('*, airline:airlines(name, logo_url)').order('id'));
+  return rows.map(flattenAirline);
+}
+
+export async function deleteFlight(id) {
+  const { error } = await supabase.from('flights').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteTour(id) {
+  const { error } = await supabase.from('tours').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function insertFlight(data) {
+  const { error } = await supabase.from('flights').insert(data);
+  if (error) throw error;
+}
+
+export async function updateFlight(id, data) {
+  const { error } = await supabase.from('flights').update(data).eq('id', id);
+  if (error) throw error;
+}
+
+export async function insertTour(data) {
+  const { data: row, error } = await supabase.from('tours').insert(data).select('id').single();
+  if (error) throw error;
+  return row.id;
+}
+
+export async function updateTour(id, data) {
+  const { error } = await supabase.from('tours').update(data).eq('id', id);
+  if (error) throw error;
+}
+
+export async function deleteTourItinerary(tourId) {
+  const { error } = await supabase.from('tour_itinerary').delete().eq('tour_id', tourId);
+  if (error) throw error;
+}
+
+export async function insertTourItinerary(tourId, items) {
+  const rows = items.map(it => ({ tour_id: tourId, day_number: it.day, title: it.title, description: it.description }));
+  const { error } = await supabase.from('tour_itinerary').insert(rows);
+  if (error) throw error;
+}
+
+// ---------- Admin: dashboard aggregates ----------
+
+export async function getDashboardStats() {
+  const now = new Date();
+  const first = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+  const nextFirst = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().slice(0, 10);
+
+  const [toursThisMonth, flightsTotal, tourBookings, flightBookings] = await Promise.all([
+    countRows(supabase.from('tours').select('*', { count: 'exact', head: true }).gte('departure_date', first).lt('departure_date', nextFirst)),
+    countRows(supabase.from('flights').select('*', { count: 'exact', head: true })),
+    countRows(supabase.from('order_items').select('*', { count: 'exact', head: true }).eq('item_type', 'tour')),
+    countRows(supabase.from('order_items').select('*', { count: 'exact', head: true }).eq('item_type', 'flight'))
+  ]);
+
+  return { toursThisMonth, flightsTotal, tourBookings, flightBookings };
+}
+
+export async function getAirlineBookingStats() {
+  const items = unwrap(await supabase.from('order_items').select('item_id').eq('item_type', 'flight'));
+  if (!items.length) return [];
+  const ids = [...new Set(items.map(i => i.item_id))];
+  const flights = unwrap(await supabase.from('flights').select('id, airlines(name)').in('id', ids));
+  const nameById = Object.fromEntries(flights.map(f => [f.id, f.airlines?.name]));
+
+  const counts = {};
+  items.forEach(i => {
+    const name = nameById[i.item_id];
+    if (name) counts[name] = (counts[name] || 0) + 1;
+  });
+  return Object.entries(counts)
+    .map(([airline, bookings]) => ({ airline, bookings }))
+    .sort((a, b) => b.bookings - a.bookings)
+    .slice(0, 10);
+}
+
+export async function getCountryBookingStats() {
+  const items = unwrap(await supabase.from('order_items').select('item_id').eq('item_type', 'tour'));
+  if (!items.length) return [];
+  const ids = [...new Set(items.map(i => i.item_id))];
+  const tours = unwrap(await supabase.from('tours').select('id, countries(name)').in('id', ids));
+  const countryById = Object.fromEntries(tours.map(t => [t.id, t.countries?.name]));
+
+  const bookingCounts = {};
+  const tourSets = {};
+  items.forEach(i => {
+    const country = countryById[i.item_id];
+    if (!country) return;
+    bookingCounts[country] = (bookingCounts[country] || 0) + 1;
+    (tourSets[country] ||= new Set()).add(i.item_id);
+  });
+  return Object.entries(bookingCounts)
+    .map(([country, booking_count]) => ({ country, booking_count, tour_count: tourSets[country].size }))
+    .sort((a, b) => b.booking_count - a.booking_count);
+}
+
+// ---------- Profiles ----------
+
+export async function getProfile(userId) {
+  return unwrap(await supabase.from('profiles').select('*').eq('id', userId).maybeSingle());
+}
+
+export async function updateProfile(userId, { fullName, phone }) {
+  const { error } = await supabase.from('profiles').update({ full_name: fullName, phone }).eq('id', userId);
+  if (error) throw error;
 }

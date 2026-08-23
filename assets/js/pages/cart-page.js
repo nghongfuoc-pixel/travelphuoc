@@ -2,8 +2,8 @@ import { getCartItems, removeCartItem, clearCart, checkout, updateCartBadge } fr
 import { formatVND } from '../format.js';
 import { getSession, renderAuthHeader } from '../auth.js';
 
-function prefillCustomerInfo() {
-  const session = getSession();
+async function prefillCustomerInfo() {
+  const session = await getSession();
   if (!session) return;
   document.getElementById('customer-name').value = session.fullName || '';
   document.getElementById('customer-email').value = session.email || '';
@@ -62,7 +62,7 @@ document.getElementById('clear-cart-btn').addEventListener('click', async () => 
 document.getElementById('checkout-form').addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  if (!getSession()) {
+  if (!(await getSession())) {
     window.location.href = 'login.html?redirect=cart.html';
     return;
   }
