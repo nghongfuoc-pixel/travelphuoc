@@ -18,7 +18,10 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Golden_Bridge_at_Ba_Na_Hills_20250718.jpg/800px-Golden_Bridge_at_Ba_Na_Hills_20250718.jpg\")",
       "Bash(curl -s -o /dev/null -w \"330px: %{http_code}\\\\n\" \"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Golden_Bridge_at_Ba_Na_Hills_20250718.jpg/330px-Golden_Bridge_at_Ba_Na_Hills_20250718.jpg\")",
       "Bash(curl -s -o /dev/null -w \"600px: %{http_code}\\\\n\" \"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Golden_Bridge_at_Ba_Na_Hills_20250718.jpg/600px-Golden_Bridge_at_Ba_Na_Hills_20250718.jpg\")",
-      "Bash(curl -sv \"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Golden_Bridge_at_Ba_Na_Hills_20250718.jpg/800px-Golden_Bridge_at_Ba_Na_Hills_20250718.jpg\")"
+      "Bash(curl -sv \"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Golden_Bridge_at_Ba_Na_Hills_20250718.jpg/800px-Golden_Bridge_at_Ba_Na_Hills_20250718.jpg\")",
+      "Bash(npm -v)",
+      "Bash(where wrangler *)",
+      "Bash(npx wrangler *)"
     ]
   }
 }

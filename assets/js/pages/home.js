@@ -2,6 +2,8 @@ import { getFeaturedTours, getAirlines, getFlightRoutePoints } from '../db/datab
 import { formatVND } from '../format.js';
 import { updateCartBadge } from '../cart.js';
 import { renderAuthHeader } from '../auth.js';
+import { getWeatherByCity, CityNotFoundError, WeatherApiError } from '../weather.js';
+import { getFiveDayForecast, ForecastApiError } from '../weather-forecast.js';
 
 async function renderFeaturedTours() {
   const tours = await getFeaturedTours();
@@ -72,9 +74,67 @@ function wireSearchForm() {
   });
 }
 
+function formatForecastDate(dateStr) {
+  const [, month, day] = dateStr.split('-');
+  return `${day}/${month}`;
+}
+
+function renderForecastDays(days) {
+  const container = document.getElementById('weather-forecast');
+  container.innerHTML = days.map(d => `
+    <div class="forecast-day">
+      <span class="forecast-date">${formatForecastDate(d.date)}</span>
+      <img class="forecast-icon" src="https://openweathermap.org/img/wn/${d.icon}@2x.png" alt="${d.description}">
+      <span class="forecast-temp">${d.temp}°C</span>
+    </div>
+  `).join('');
+}
+
+function wireWeatherWidget() {
+  const form = document.getElementById('weather-form');
+  const input = document.getElementById('weather-city-input');
+  const result = document.getElementById('weather-result');
+  const forecast = document.getElementById('weather-forecast');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const city = input.value.trim();
+    if (!city) return;
+
+    result.className = 'weather-result is-loading';
+    result.textContent = 'Đang tải dữ liệu thời tiết...';
+    forecast.innerHTML = '';
+
+    try {
+      const weather = await getWeatherByCity(city);
+      result.className = 'weather-result';
+      result.textContent = `${weather.city}: ${weather.temperature}°C, ${weather.description}`;
+    } catch (err) {
+      result.className = 'weather-result is-error';
+      if (err instanceof CityNotFoundError) {
+        result.textContent = err.message;
+      } else if (err instanceof WeatherApiError) {
+        result.textContent = err.message + ', vui lòng thử lại.';
+      } else {
+        result.textContent = 'Đã có lỗi xảy ra, vui lòng thử lại.';
+      }
+      return;
+    }
+
+    try {
+      const data = await getFiveDayForecast(city);
+      renderForecastDays(data.days);
+    } catch (err) {
+      const message = err instanceof ForecastApiError ? err.message : 'Không thể lấy dự báo 5 ngày.';
+      forecast.innerHTML = `<p class="weather-result is-error">${message}</p>`;
+    }
+  });
+}
+
 renderFeaturedTours();
 renderRouteOptions();
 renderAirlines();
 wireSearchForm();
+wireWeatherWidget();
 updateCartBadge();
 renderAuthHeader();

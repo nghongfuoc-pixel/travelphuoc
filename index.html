@@ -64,6 +64,21 @@
 
   <section class="section">
     <div class="container">
+      <h2>Thời tiết điểm đến</h2>
+      <form id="weather-form" class="weather-box">
+        <div class="field">
+          <label for="weather-city-input">Tên thành phố</label>
+          <input id="weather-city-input" type="text" placeholder="VD: Đà Nẵng" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Xem thời tiết</button>
+      </form>
+      <p id="weather-result" class="weather-result"></p>
+      <div id="weather-forecast" class="forecast-list"></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
       <h2>Tour du lịch nổi bật</h2>
       <div class="tour-grid" id="featured-tours"></div>
     </div>
