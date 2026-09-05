@@ -1,0 +1,13 @@
+{
+  "routes": [
+    {
+      "routePath": "/api/weather-forecast",
+      "mountPath": "/api",
+      "method": "GET",
+      "module": [
+        "api/weather-forecast.js:onRequestGet"
+      ]
+    }
+  ],
+  "baseURL": "/"
+}
