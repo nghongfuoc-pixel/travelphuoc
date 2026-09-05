@@ -21,7 +21,12 @@
       "Bash(curl -sv \"https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Golden_Bridge_at_Ba_Na_Hills_20250718.jpg/800px-Golden_Bridge_at_Ba_Na_Hills_20250718.jpg\")",
       "Bash(npm -v)",
       "Bash(where wrangler *)",
-      "Bash(npx wrangler *)"
+      "Bash(npx wrangler *)",
+      "Bash(cat \"C:\\\\Users\\\\csc\\\\AppData\\\\Roaming\\\\xdg.config\\\\.wrangler\\\\config\\\\default.toml\" 2>&1 | head -20)",
+      "Bash(git log *)",
+      "Bash(curl -s -i https://izraxdbximjnhuzdwzdf.supabase.co/rest/v1/ -H 'apikey: sb_publishable_ShhPuuvGfLeEoQR13hQiKA_eqfcPwhe')",
+      "Bash(curl -s -o /tmp/resp.txt -w \"HTTP_STATUS:%{http_code}\\\\nTIME:%{time_total}\\\\n\" \"https://izraxdbximjnhuzdwzdf.supabase.co/rest/v1/\" -H \"apikey: sb_publishable_ShhPuuvGfLeEoQR13hQiKA_eqfcPwhe\" --max-time 15)",
+      "Bash(echo \"exit code: $?\")"
     ]
   }
 }
