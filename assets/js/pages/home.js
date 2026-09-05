@@ -33,6 +33,19 @@ async function renderRouteOptions() {
   document.getElementById('to-input').innerHTML =
     '<option value="" disabled selected>Chọn điểm đến</option>' +
     destinations.map(d => `<option value="${d}">${d}</option>`).join('');
+
+  document.getElementById('to-input').addEventListener('change', (e) => {
+    const city = cleanCityName(e.target.value);
+    if (!city) return;
+    document.getElementById('weather-city-input').value = city;
+    fetchAndRenderWeather(city);
+  });
+}
+
+// Bỏ phần "(MÃ_SÂN_BAY)" khỏi giá trị dropdown điểm đến, VD "Siem Reap (REP)" -> "Siem Reap",
+// vì API thời tiết cần tên thành phố thuần, không nhận dạng được mã sân bay kèm theo.
+function cleanCityName(value) {
+  return value.replace(/\s*\([^)]*\)\s*$/, '').trim();
 }
 
 async function renderAirlines() {
@@ -90,44 +103,48 @@ function renderForecastDays(days) {
   `).join('');
 }
 
-function wireWeatherWidget() {
-  const form = document.getElementById('weather-form');
-  const input = document.getElementById('weather-city-input');
+async function fetchAndRenderWeather(city) {
   const result = document.getElementById('weather-result');
   const forecast = document.getElementById('weather-forecast');
 
-  form.addEventListener('submit', async (e) => {
+  result.className = 'weather-result is-loading';
+  result.textContent = 'Đang tải dữ liệu thời tiết...';
+  forecast.innerHTML = '';
+
+  try {
+    const weather = await getWeatherByCity(city);
+    result.className = 'weather-result';
+    result.textContent = `${weather.city}: ${weather.temperature}°C, ${weather.description}`;
+  } catch (err) {
+    result.className = 'weather-result is-error';
+    if (err instanceof CityNotFoundError) {
+      result.textContent = err.message;
+    } else if (err instanceof WeatherApiError) {
+      result.textContent = err.message + ', vui lòng thử lại.';
+    } else {
+      result.textContent = 'Đã có lỗi xảy ra, vui lòng thử lại.';
+    }
+    return;
+  }
+
+  try {
+    const data = await getFiveDayForecast(city);
+    renderForecastDays(data.days);
+  } catch (err) {
+    const message = err instanceof ForecastApiError ? err.message : 'Không thể lấy dự báo 5 ngày.';
+    forecast.innerHTML = `<p class="weather-result is-error">${message}</p>`;
+  }
+}
+
+function wireWeatherWidget() {
+  const form = document.getElementById('weather-form');
+  const input = document.getElementById('weather-city-input');
+
+  form.addEventListener('submit', (e) => {
     e.preventDefault();
     const city = input.value.trim();
     if (!city) return;
-
-    result.className = 'weather-result is-loading';
-    result.textContent = 'Đang tải dữ liệu thời tiết...';
-    forecast.innerHTML = '';
-
-    try {
-      const weather = await getWeatherByCity(city);
-      result.className = 'weather-result';
-      result.textContent = `${weather.city}: ${weather.temperature}°C, ${weather.description}`;
-    } catch (err) {
-      result.className = 'weather-result is-error';
-      if (err instanceof CityNotFoundError) {
-        result.textContent = err.message;
-      } else if (err instanceof WeatherApiError) {
-        result.textContent = err.message + ', vui lòng thử lại.';
-      } else {
-        result.textContent = 'Đã có lỗi xảy ra, vui lòng thử lại.';
-      }
-      return;
-    }
-
-    try {
-      const data = await getFiveDayForecast(city);
-      renderForecastDays(data.days);
-    } catch (err) {
-      const message = err instanceof ForecastApiError ? err.message : 'Không thể lấy dự báo 5 ngày.';
-      forecast.innerHTML = `<p class="weather-result is-error">${message}</p>`;
-    }
+    fetchAndRenderWeather(city);
   });
 }
 

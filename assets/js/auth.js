@@ -1,53 +1,44 @@
-import { supabase, getProfile } from './db/database.js';
 import { validateUsername, validatePassword, validateEmail } from './validators.js';
+
+const API_BASE = '/api';
 
 function isAdminPage() {
   return window.location.pathname.includes('/admin/');
 }
 
-async function buildSession(supaUser) {
-  if (!supaUser) return null;
-  const profile = await getProfile(supaUser.id);
-  if (!profile) return null;
-  return {
-    userId: supaUser.id,
-    username: profile.username,
-    email: supaUser.email,
-    role: profile.role,
-    fullName: profile.full_name,
-    phone: profile.phone
-  };
+async function apiSend(method, path, body) {
+  const res = await fetch(API_BASE + path, {
+    method,
+    headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+    body: body !== undefined ? JSON.stringify(body) : undefined
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(mapAuthError(data.error));
+  return data;
+}
+
+function mapAuthError(message) {
+  if (!message) return 'Đã có lỗi xảy ra.';
+  if (message.includes('Username hoặc email đã được sử dụng')) return message;
+  return message;
 }
 
 export async function getSession() {
-  const { data, error } = await supabase.auth.getSession();
-  if (error || !data.session) return null;
-  return buildSession(data.session.user);
+  const res = await fetch(`${API_BASE}/auth/session`);
+  if (!res.ok) return null;
+  return res.json();
 }
 
 export async function logout() {
-  await supabase.auth.signOut();
+  await apiSend('POST', '/auth/logout');
   window.location.href = (isAdminPage() ? '../' : '') + 'login.html';
-}
-
-function mapAuthError(err) {
-  const msg = err?.message || '';
-  if (msg.includes('Invalid login credentials')) return 'Tài khoản hoặc mật khẩu không đúng.';
-  if (msg.includes('already registered') || msg.includes('duplicate key')) return 'Username hoặc email đã được sử dụng.';
-  if (msg.includes('Email not confirmed')) return 'Vui lòng xác nhận email trước khi đăng nhập.';
-  return msg || 'Đã có lỗi xảy ra.';
 }
 
 export async function login(identifier, password) {
   if (!identifier.includes('@')) {
     throw new Error('Vui lòng đăng nhập bằng email.');
   }
-  const { data, error } = await supabase.auth.signInWithPassword({ email: identifier, password });
-  if (error) throw new Error(mapAuthError(error));
-
-  const session = await buildSession(data.user);
-  if (!session) throw new Error('Không tìm thấy hồ sơ tài khoản.');
-  return session;
+  return apiSend('POST', '/auth/login', { identifier, password });
 }
 
 export async function register({ username, email, password, fullName = '', phone = '' }) {
@@ -60,17 +51,12 @@ export async function register({ username, email, password, fullName = '', phone
   const emailError = validateEmail(email);
   if (emailError) throw new Error(emailError);
 
-  const { error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { data: { username, full_name: fullName, phone } }
-  });
-  if (error) throw new Error(mapAuthError(error));
+  await apiSend('POST', '/auth/register', { username, email, password, fullName, phone });
 }
 
 export async function forgotPassword(email) {
-  const { error } = await supabase.auth.resetPasswordForEmail(email);
-  return !error;
+  const { exists } = await apiSend('POST', '/auth/forgot-password', { email });
+  return !!exists;
 }
 
 export async function requireAuth(role = null) {

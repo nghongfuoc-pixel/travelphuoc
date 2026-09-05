@@ -1,23 +1,25 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from '../supabase-config.js';
+const API_BASE = '/api';
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-function unwrap({ data, error }) {
-  if (error) throw error;
-  return data;
+async function apiGet(path) {
+  const res = await fetch(API_BASE + path);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || 'Lỗi tải dữ liệu');
+  }
+  return res.json();
 }
 
-async function countRows(builder) {
-  const { count, error } = await builder;
-  if (error) throw error;
-  return count || 0;
-}
-
-function flattenAirline(row) {
-  if (!row) return row;
-  const { airline, ...rest } = row;
-  return { ...rest, airline_name: airline?.name, airline_logo: airline?.logo_url };
+async function apiSend(method, path, body) {
+  const res = await fetch(API_BASE + path, {
+    method,
+    headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+    body: body !== undefined ? JSON.stringify(body) : undefined
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Đã có lỗi xảy ra');
+  }
+  return res.json();
 }
 
 export function genItinerary(destination, days) {
@@ -47,226 +49,138 @@ export function genItinerary(destination, days) {
 // ---------- Catalog (public read) ----------
 
 export async function getFeaturedTours() {
-  return unwrap(await supabase.from('tours').select('*').eq('featured', true).order('id').limit(8));
+  return apiGet('/tours?featured=1&limit=8');
 }
 
 export async function getAirlines() {
-  return unwrap(await supabase.from('airlines').select('*').order('name'));
+  return apiGet('/airlines');
 }
 
 export async function getCountries() {
-  return unwrap(await supabase.from('countries').select('*').order('name'));
+  return apiGet('/countries');
 }
 
 export async function getFlightRoutePoints() {
-  const rows = unwrap(await supabase.from('flights').select('origin, destination'));
-  const origins = [...new Set(rows.map(r => r.origin))].sort();
-  const destinations = [...new Set(rows.map(r => r.destination))].sort();
-  return { origins, destinations };
+  return apiGet('/flights?routePoints=1');
 }
 
 export async function getFlightsWithAirline() {
-  const rows = unwrap(await supabase
-    .from('flights')
-    .select('*, airline:airlines(name, logo_url)')
-    .order('departure_date')
-    .order('departure_time'));
-  return rows.map(flattenAirline);
+  return apiGet('/flights');
 }
 
 export async function getFlightById(id) {
-  const { data, error } = await supabase
-    .from('flights')
-    .select('*, airline:airlines(name, logo_url)')
-    .eq('id', id)
-    .maybeSingle();
-  if (error) throw error;
-  return flattenAirline(data);
+  return apiGet(`/flights/${id}`);
 }
 
 export async function getToursWithAirline() {
-  const rows = unwrap(await supabase
-    .from('tours')
-    .select('*, airline:airlines(name, logo_url)')
-    .order('departure_date'));
-  return rows.map(flattenAirline);
+  return apiGet('/tours');
 }
 
 export async function getTourById(id) {
-  const { data, error } = await supabase
-    .from('tours')
-    .select('*, airline:airlines(name, logo_url)')
-    .eq('id', id)
-    .maybeSingle();
-  if (error) throw error;
-  return flattenAirline(data);
+  return apiGet(`/tours/${id}`);
 }
 
 export async function getTourItinerary(tourId) {
-  return unwrap(await supabase.from('tour_itinerary').select('*').eq('tour_id', tourId).order('day_number'));
+  return apiGet(`/tours/${tourId}/itinerary`);
 }
 
 // ---------- Cart ----------
 
 export async function getCartItemsBySession(sessionId) {
-  return unwrap(await supabase.from('cart_items').select('*').eq('session_id', sessionId).order('added_at', { ascending: false }));
+  return apiGet(`/cart?session_id=${encodeURIComponent(sessionId)}`);
 }
 
 export async function addCartItem({ sessionId, itemType, itemId, fareClass, price }) {
-  unwrap(await supabase.from('cart_items').insert({
-    session_id: sessionId, item_type: itemType, item_id: itemId, fare_class: fareClass, price
-  }));
+  await apiSend('POST', '/cart', { sessionId, itemType, itemId, fareClass, price });
 }
 
 export async function removeCartItem(id) {
-  const { error } = await supabase.from('cart_items').delete().eq('id', id);
-  if (error) throw error;
+  await apiSend('DELETE', `/cart/${id}`);
 }
 
 export async function clearCartBySession(sessionId) {
-  const { error } = await supabase.from('cart_items').delete().eq('session_id', sessionId);
-  if (error) throw error;
+  await apiSend('DELETE', `/cart?session_id=${encodeURIComponent(sessionId)}`);
 }
 
 export async function cartCountBySession(sessionId) {
-  return countRows(supabase.from('cart_items').select('*', { count: 'exact', head: true }).eq('session_id', sessionId));
+  const { count } = await apiGet(`/cart/count?session_id=${encodeURIComponent(sessionId)}`);
+  return count;
 }
 
 // ---------- Orders ----------
 
-export async function createOrder({ userId, name, email, phone, total }) {
-  const { data, error } = await supabase
-    .from('orders')
-    .insert({ user_id: userId, customer_name: name, email, phone, total_price: total, status: 'confirmed' })
-    .select('id')
-    .single();
-  if (error) throw error;
-  return data.id;
+export async function createOrder({ name, email, phone, total }) {
+  const { id } = await apiSend('POST', '/orders', { name, email, phone, total });
+  return id;
 }
 
 export async function createOrderItems(orderId, items) {
-  const rows = items.map(it => ({
-    order_id: orderId, item_type: it.item_type, item_id: it.item_id, fare_class: it.fare_class, price: it.price
-  }));
-  const { error } = await supabase.from('order_items').insert(rows);
-  if (error) throw error;
+  await apiSend('POST', `/orders/${orderId}/items`, { items });
 }
 
 // ---------- Admin: tours/flights CRUD ----------
 
 export async function getAdminTours() {
-  return unwrap(await supabase.from('tours').select('*').order('id'));
+  return apiGet('/tours?admin=1');
 }
 
 export async function getAdminFlightsWithAirline() {
-  const rows = unwrap(await supabase.from('flights').select('*, airline:airlines(name, logo_url)').order('id'));
-  return rows.map(flattenAirline);
+  return apiGet('/flights?admin=1');
 }
 
 export async function deleteFlight(id) {
-  const { error } = await supabase.from('flights').delete().eq('id', id);
-  if (error) throw error;
+  await apiSend('DELETE', `/flights/${id}`);
 }
 
 export async function deleteTour(id) {
-  const { error } = await supabase.from('tours').delete().eq('id', id);
-  if (error) throw error;
+  await apiSend('DELETE', `/tours/${id}`);
 }
 
 export async function insertFlight(data) {
-  const { error } = await supabase.from('flights').insert(data);
-  if (error) throw error;
+  await apiSend('POST', '/flights', data);
 }
 
 export async function updateFlight(id, data) {
-  const { error } = await supabase.from('flights').update(data).eq('id', id);
-  if (error) throw error;
+  await apiSend('PUT', `/flights/${id}`, data);
 }
 
 export async function insertTour(data) {
-  const { data: row, error } = await supabase.from('tours').insert(data).select('id').single();
-  if (error) throw error;
-  return row.id;
+  const { id } = await apiSend('POST', '/tours', data);
+  return id;
 }
 
 export async function updateTour(id, data) {
-  const { error } = await supabase.from('tours').update(data).eq('id', id);
-  if (error) throw error;
+  await apiSend('PUT', `/tours/${id}`, data);
 }
 
 export async function deleteTourItinerary(tourId) {
-  const { error } = await supabase.from('tour_itinerary').delete().eq('tour_id', tourId);
-  if (error) throw error;
+  await apiSend('DELETE', `/tours/${tourId}/itinerary`);
 }
 
 export async function insertTourItinerary(tourId, items) {
-  const rows = items.map(it => ({ tour_id: tourId, day_number: it.day, title: it.title, description: it.description }));
-  const { error } = await supabase.from('tour_itinerary').insert(rows);
-  if (error) throw error;
+  await apiSend('POST', `/tours/${tourId}/itinerary`, { items });
 }
 
 // ---------- Admin: dashboard aggregates ----------
 
 export async function getDashboardStats() {
-  const now = new Date();
-  const first = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-  const nextFirst = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().slice(0, 10);
-
-  const [toursThisMonth, flightsTotal, tourBookings, flightBookings] = await Promise.all([
-    countRows(supabase.from('tours').select('*', { count: 'exact', head: true }).gte('departure_date', first).lt('departure_date', nextFirst)),
-    countRows(supabase.from('flights').select('*', { count: 'exact', head: true })),
-    countRows(supabase.from('order_items').select('*', { count: 'exact', head: true }).eq('item_type', 'tour')),
-    countRows(supabase.from('order_items').select('*', { count: 'exact', head: true }).eq('item_type', 'flight'))
-  ]);
-
-  return { toursThisMonth, flightsTotal, tourBookings, flightBookings };
+  return apiGet('/admin/stats');
 }
 
 export async function getAirlineBookingStats() {
-  const items = unwrap(await supabase.from('order_items').select('item_id').eq('item_type', 'flight'));
-  if (!items.length) return [];
-  const ids = [...new Set(items.map(i => i.item_id))];
-  const flights = unwrap(await supabase.from('flights').select('id, airlines(name)').in('id', ids));
-  const nameById = Object.fromEntries(flights.map(f => [f.id, f.airlines?.name]));
-
-  const counts = {};
-  items.forEach(i => {
-    const name = nameById[i.item_id];
-    if (name) counts[name] = (counts[name] || 0) + 1;
-  });
-  return Object.entries(counts)
-    .map(([airline, bookings]) => ({ airline, bookings }))
-    .sort((a, b) => b.bookings - a.bookings)
-    .slice(0, 10);
+  return apiGet('/admin/booking-by-airline');
 }
 
 export async function getCountryBookingStats() {
-  const items = unwrap(await supabase.from('order_items').select('item_id').eq('item_type', 'tour'));
-  if (!items.length) return [];
-  const ids = [...new Set(items.map(i => i.item_id))];
-  const tours = unwrap(await supabase.from('tours').select('id, countries(name)').in('id', ids));
-  const countryById = Object.fromEntries(tours.map(t => [t.id, t.countries?.name]));
-
-  const bookingCounts = {};
-  const tourSets = {};
-  items.forEach(i => {
-    const country = countryById[i.item_id];
-    if (!country) return;
-    bookingCounts[country] = (bookingCounts[country] || 0) + 1;
-    (tourSets[country] ||= new Set()).add(i.item_id);
-  });
-  return Object.entries(bookingCounts)
-    .map(([country, booking_count]) => ({ country, booking_count, tour_count: tourSets[country].size }))
-    .sort((a, b) => b.booking_count - a.booking_count);
+  return apiGet('/admin/booking-by-country');
 }
 
 // ---------- Profiles ----------
 
 export async function getProfile(userId) {
-  return unwrap(await supabase.from('profiles').select('*').eq('id', userId).maybeSingle());
+  return apiGet(`/profile?userId=${userId}`);
 }
 
 export async function updateProfile(userId, { fullName, phone }) {
-  const { error } = await supabase.from('profiles').update({ full_name: fullName, phone }).eq('id', userId);
-  if (error) throw error;
+  await apiSend('PUT', '/profile', { userId, fullName, phone });
 }
